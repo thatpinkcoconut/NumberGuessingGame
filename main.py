@@ -15,42 +15,33 @@ import os
 import random
 
 
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
+def clear(): os.system("cls" if os.name == "nt" else "clear")
 
 
-# CONFIG
-DIFFICULTYLEVELS_NAME = ("Easy", "Normal", "Hard")  # you can add more
-DIFFICULTYLEVELS_MAXNUMBER = (20, 50, 100)  # you can add more
+# CONFIG - You can add/modify
+DIFFICULTYLEVELS = (
+    ("Easy", 20),
+    ("Normal", 50),
+    ("Hard", 100)
+)
 ATTEMPTLEVELS = ("infinite", 3, 5, 10)  # you can add more
 
-# GLOBAL VARIABLES
-number = 0
-difficultyindex = 0
-attempts = 0
-remainingattempts = 0
-showattempts = True
 
-
-def setdifficulty():
-    global difficultyindex
-
+def initgame():
+    # Level of difficulty
     clear()
     print("Set the difficulty of the game:")
-    for i in range(len(DIFFICULTYLEVELS_NAME)):
-        print("[{0}] - {1}".format(i, DIFFICULTYLEVELS_NAME[i]))
+    for i in range(len(DIFFICULTYLEVELS)):
+        print("[{0}] - {1}".format(i, DIFFICULTYLEVELS[i][0]))
 
     while True:
         d = input()
-        if d.isnumeric() and 0 <= int(d) < len(DIFFICULTYLEVELS_MAXNUMBER):
-            maxnumberindex = int(d)
+        if d.isnumeric() and 0 <= int(d) <= len(DIFFICULTYLEVELS[0]):
+            difficulty = int(d)
             break
-        print("Invalid input. Try again.")
+        print("Invalid input. Enter the number of your choice.")
 
-
-def setattempts():
-    global attempts, remainingattempts, showattempts
-
+    # No. of attempts
     clear()
     print("Set the number of attempts:")
     for i in range(len(ATTEMPTLEVELS)):
@@ -60,80 +51,70 @@ def setattempts():
         a = input()
         if a.isnumeric() and 0 <= int(a) < len(ATTEMPTLEVELS):
             if int(a) == 0:
-                attempts = 9999
-                remainingattempts = attempts
-                showattempts = False
+                maxattempts = 9999
             else:
-                attempts = ATTEMPTLEVELS[int(a)]
-                remainingattempts = attempts
-                showattempts = True
+                maxattempts = ATTEMPTLEVELS[int(a)]
             break
         print("Invalid input. Enter the number of your choice.")
 
+    # Finally, generate the number to guess
+    the_number = random.randint(1, DIFFICULTYLEVELS[difficulty][1])
 
-def displayhud():
-    print("|------------------------------------|")
-    print("|      THE NUMBER GUESSING GAME!     |")
-    print("|------------------------------------|")
-
-    if showattempts:
-        print("Difficulty: {0} \nAttempts left: {1}".
-              format(DIFFICULTYLEVELS_NAME[difficultyindex], remainingattempts))
-    else:
-        print("Difficulty: {0} \nAttempts left: Infinite".
-              format(DIFFICULTYLEVELS_NAME[difficultyindex]))
-
-    print("--------------------------------------")
-
-
-def generateNumber():
-    global number
-    number = random.randint(1, DIFFICULTYLEVELS_MAXNUMBER[difficultyindex])
+    return difficulty, maxattempts, the_number
 
 
 def game():
-    global remainingattempts
-    comment = ""
+    initvalues = initgame()
+    difficulty = initvalues[0]
+    maxattempts = initvalues[1]
+    the_number = initvalues[2]
+    _attempts = maxattempts
+    _comment = ""
 
-    setdifficulty()
-    setattempts()
-    generateNumber()
+    def displayhud():
+        print("|------------------------------------|")
+        print("|      THE NUMBER GUESSING GAME!     |")
+        print("|------------------------------------|")
+        if maxattempts == "infinite":
+            print("Difficulty: {0} \nAttempts left: Infinite".
+                  format(DIFFICULTYLEVELS[difficulty][0]))
+        else:
+            print("Difficulty: {0} \nAttempts left: {1}".
+                  format(DIFFICULTYLEVELS[difficulty][0], _attempts))
+        print("--------------------------------------")
 
-    clear()
-
-    while remainingattempts > -1:
+    while _attempts > 0:
         clear()
         displayhud()
 
-        print(comment) if comment != "" else None
-        print("Guess the number from 1 to {0}!".format(DIFFICULTYLEVELS_MAXNUMBER[difficultyindex]))
+        print(_comment) if _comment != "" else None
+        print("Guess the number from 1 to {0}!".format(DIFFICULTYLEVELS[difficulty][1]))
         g = input()
         if g.isnumeric():
-            remainingattempts -= 1
-            if int(g) == number:
+            _attempts -= 1
+            if int(g) == the_number:
                 break
-            elif int(g) > number:
-                if abs(int(g) - number) <= 3:
-                    comment = "You're very close! Lower!"
+            elif int(g) > the_number:
+                if abs(int(g) - the_number) <= 3:
+                    _comment = "You're very close! Lower!"
                 else:
-                    comment = "Lower!"
-            elif int(g) < number:
-                if abs(int(g) - number) <= 3:
-                    comment = "You're very close! Higher!"
+                    _comment = "Lower!"
+            elif int(g) < the_number:
+                if abs(int(g) - the_number) <= 3:
+                    _comment = "You're very close! Higher!"
                 else:
-                    comment = "Higher!"
+                    _comment = "Higher!"
         else:
             print("Invalid input. Enter a number.")
 
-    if remainingattempts <= -1:
+    if _attempts <= 0:
         clear()
-        print("You ran out of attempts. The correct number is {0}.".format(number))
+        print("You ran out of attempts. The correct number is {0}.".format(the_number))
         print("Better luck next time!")
     else:
         clear()
-        print("You win! The correct number is {0}.".format(number))
-        if showattempts:
-            print("You did it in {0} attempts. Congratulations!".format(attempts - remainingattempts))
+        print("You win! The correct number is {0}.".format(the_number))
+        print("You did it in {0} attempts. Congratulations!".format(maxattempts - _attempts))
 
     print("\nInput [Y] to play again.")
     p = input()
